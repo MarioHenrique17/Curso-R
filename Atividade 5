@@ -1,0 +1,16 @@
+#################################################
+# Lista de exercícios 5
+# Autor: Mario Henrique Lopes Duarte de Oliveira
+# Data: 01/04/2026
+#################################################
+# Removendo os objetos ativos
+#rm(list=ls())
+Calculo_LDLC <- function(CT, HDLc, TG, jejum = TRUE) {
+         VLDLc <- TG / 5 # Primeiro calcula-se o VLDLc
+         LDLc <- CT - HDLc - VLDLc # Em seguida o LDLc, porém, utilizando as condições.
+         if (TG >= 400) {warning("O resultado obtido é impreciso (TG >= 400 mg/dL).")} # Condição para caso o valor de TG seja >=400, o resultado é impreciso.
+         if (LDLc >= 160 & ((jejum == TRUE & TG >= 150) | (jejum == FALSE & TG >= 175))) { # Condições para o aviso de hiperlipidemia aparecer.
+         cat("\nAviso: As concentrações informadas indicam hiperlipidemia mista.\n")} 
+         else if (LDLc > 160) {cat("\nAviso: As concentrações informadas indicam hipercolesterolemia isolada.\n")} # Caso as condições anteriores não sejam atendidas, essa condição será testada e caso seja atendida a mensagem aparecerá.
+         return(LDLc) # Serve para que o R retorne um valor, mesmo que nenhuma das condições anteriores seja atendida.
+         }
