@@ -1,0 +1,105 @@
+##########################################
+# Lista de exercícios 4
+# Autor: Mario Henrique Lopes Duarte de Oliveira
+# Data: 30/04/2026
+##########################################
+# Removendo os objetos ativos
+rm(list=ls())
+tabela <- read.table("https://codeberg.org/edsonzmartinez/CursoR/raw/branch/main/antropo.txt",
+                    header = TRUE, na.strings = "NA")
+str(tabela)
+head(tabela)
+#Exercício 1
+#É necessário criar uma nova variável que seja a multiplicação dos valores da coluna de weight por 0.45359237
+tabela$peso_kg <- tabela$Weight * 0.45359237
+tabela$peso_kg
+
+#Exercício 2
+#É necessário criar uma nova variável que seja a multiplicação dos valores da coluna de height por 2.54
+tabela$altura_cm <- tabela$Height * 2.54
+tabela$altura_cm
+
+#Exercício 3
+par(mfrow=c(4,5), mar=c(3,3,3,3)) # Como são 17 variáveis, dividi a tela em 20 espaços e ajusteis as margens para que os gráficos não fiquem colados.
+for (coluna in names(tabela)) {  # Cria uma repetição, dizendo que é pra realizar o que está dentro de {} para cada coluna.
+      boxplot(tabela[[coluna]], main=coluna, col="blue", pch=19, staplewex=0.3,
+              whisklty=1, boxwex=0.6, axes=TRUE, xlab="")
+ mtext(side=1,at=0.5,line=1,"Média")
+ mtext(side=1,at=0.5,line=2.2,"DP")
+ mtext(side=1,at=1,line=1,round(mean(tabela[[coluna]])))
+ mtext(side=1,at=1,line=2.2,round(sd(tabela[[coluna]])))}
+
+
+#Exercício 4
+plot(tabela$altura_cm, tabela$peso_kg, 
+     xlab = "Altura (cm)", ylab = "Peso (kg)",
+     main = "Dispersão Peso vs Altura",
+     pch = 19, col = "Blue")
+mod <- lm(peso_kg ~ altura_cm, data = tabela) # Utilizando a função linear model (lm) buscando encontrar a tendência dos dados de peso em relação à altura
+resid_pad <- rstandard(mod) # Padronização dos valores do modelo linear para encontrar os outliers.
+outlier_relacao <- which(abs(resid_pad) > 2) # Dizer que qualquer valor padronizado maior que 2 é um outlier. O abs é para tornar os valores absolutos, ou seja, -2 se torna 2.
+points(tabela$altura_cm[outlier_relacao], tabela$peso_kg[outlier_relacao], 
+       col = "red", pch = 19, cex = 1.2) # Aqui serve para selecionar apenas os pontos que se encaixem nas condições da linha anterior e pintá-los de outra cor.
+legend("topleft", legend = c("Dados normais", "Outliers na relação"), 
+       col = c("Blue", "red"), pch = 19)
+
+#Exercício 5
+meu_histograma <- function(dados, titulo, cor) {
+                  p_valor <- shapiro.test(dados)$p.value
+                  status <- ifelse(p_valor < 0.05, "NÃO Normal", "Normal")
+                  mensagem <- paste("p-valor =", round(p_valor, 4), "-", status)
+                  hist(dados, main = titulo, xlab = titulo, ylab = "Frequência", col = cor, 
+                       sub = mensagem)} #Com essa função, ao gerar o histograma, ja calcula o p diz se a distribuição é normal.
+par(mfrow = c(1, 3), mar = c(6, 4, 4, 2))
+meu_histograma(dados = tabela$Age,       titulo = "Idade",    cor = "green")
+meu_histograma(dados = tabela$peso_kg,   titulo = "Peso",     cor = "red")
+meu_histograma(dados = tabela$altura_cm, titulo = "Estatura", cor = "blue")
+
+#Exercício 6
+par(mfrow=c(4,4), mar=c(2,2,2,2)) # Divisão da tela em espaços.
+for (coluna in names(tabela)) {  # Cria uma repetição.
+  if (is.numeric(tabela[[coluna]]) & coluna != "Fat") { # Fazer gráficos apenas de colunas que possuam valores numéricos e não seja (!=) a coluna fat.
+    plot(x = tabela[[coluna]], y = tabela$Fat, 
+         main=paste("Fat vs", coluna), 
+         xlab=coluna, ylab="Fat (%)", pch=19, col="blue")}}
+
+#Exercício 7
+correlacoes <- cor(tabela)[, "Fat"]
+print("--- Correlações com o Percentual de Gordura (Fat) em ordem crescente ---")
+correlacoes_ordenadas <- sort(correlacoes)
+print(correlacoes_ordenadas)
+# A variável que mais parece correlacionada com o percentual de gordura é a circunferencia abdominal, pois seu valor de correlação é o mais próximo de 1.
+
+#Exercício 8
+print("--- Correlação: Idade vs Abdômen ---")
+print(cor(tabela$Age, tabela$Abdomen))
+# O valor de correlação entre idade e circunferência de abdomen é 0.23, o que indica que não existe correlação entre esses dois valores.
+    
+#Exercício 9
+tabela$grupos_idade <- ifelse(tabela$Age <= 45, 0, 1)
+
+#Exercício 10
+par(mfrow=c(4,5), mar=c(2,2,2,2))
+for (coluna in names(tabela)) 
+  {if (is.numeric(tabela[[coluna]]) & coluna != "grupos_idade") {
+    boxplot(tabela[[coluna]] ~ tabela$grupos_idade, 
+            main=coluna, xlab="Grupo (0=<=45, 1=>45)", col=c("red", "blue"))}}
+
+#Exercício 11
+par(mfrow=c(4,5), mar=c(2,2,2,2))
+print("--- Testes de Normalidade de Shapiro-Wilk ---")
+for (coluna in names(tabela)) {
+  if (is.numeric(tabela[[coluna]]) & coluna != "grupos_idade") {
+      qqnorm(tabela[[coluna]], main=coluna)
+      qqline(tabela[[coluna]], col="red")
+      cat("\nVariável:", coluna, "\n") # Teste Estatístico (p-valor < 0.05 indica que NÃO é normal). Colocando dessa forma, o R já faz os graficos pra todas as variáveis, assim como o teste estatístico.
+      print(shapiro.test(tabela[[coluna]]))}}
+
+#Exercício 12
+print("--- Testes de Comparação de Médias (Test-t) ---")
+for (coluna in names(tabela)) { #Utilizando a função for agiliza o processo
+  if (is.numeric(tabela[[coluna]]) & coluna != "grupos_idade") {
+    cat("\nComparação para a variável:", coluna, "\n") #Para organizar, mostra sobre qual variável os dados se referem.
+    print(t.test(tabela[[coluna]] ~ tabela$grupos_idade, data=tabela))}} # Utilizando o T-test, visto que no exercício anterior, os dados mostraram distribuição próxima da normalidade.
+
+
